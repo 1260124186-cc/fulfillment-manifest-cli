@@ -105,9 +105,11 @@ func pointerTo(manifest domain.Manifest) *domain.Manifest {
 
 func cloneManifest(manifest domain.Manifest) domain.Manifest {
 	clone := manifest
-	clone.DeliveryWindow = &domain.DeliveryWindow{
-		Start: manifest.DeliveryWindow.Start,
-		End:   manifest.DeliveryWindow.End,
+	if manifest.DeliveryWindow != nil {
+		clone.DeliveryWindow = &domain.DeliveryWindow{
+			Start: manifest.DeliveryWindow.Start,
+			End:   manifest.DeliveryWindow.End,
+		}
 	}
 	clone.Reservations = append([]domain.Reservation(nil), manifest.Reservations...)
 	return clone

@@ -51,4 +51,9 @@ func TestMemoryRepositoryAllowsManifestWithoutDeliveryWindow(t *testing.T) {
 	if !ok || stored.DeliveryWindow != nil {
 		t.Fatalf("Get() = %#v, %t", stored, ok)
 	}
+
+	storedAgain, ok := repository.Get("manual-order")
+	if !ok || storedAgain.DeliveryWindow != nil {
+		t.Fatalf("second Get() = %#v, %t", storedAgain, ok)
+	}
 }
