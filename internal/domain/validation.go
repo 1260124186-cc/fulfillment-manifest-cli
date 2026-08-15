@@ -23,7 +23,7 @@ func NormalizeRequest(request ManifestRequest) (Order, error) {
 		return Order{}, fmt.Errorf("at least one package is required")
 	}
 
-	packages := request.Packages[:0]
+	packages := make([]PackageRequest, 0, len(request.Packages))
 	for _, item := range request.Packages {
 		item.SKU = strings.ToLower(strings.TrimSpace(item.SKU))
 		if item.SKU == "" || item.Units <= 0 {
