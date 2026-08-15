@@ -50,7 +50,6 @@ func (repository *MemoryRepository) Get(orderID string) (domain.Manifest, bool) 
 type memorySession struct {
 	repository *MemoryRepository
 	pending    *domain.Manifest
-	committed  bool
 }
 
 func (session *memorySession) Save(ctx context.Context, manifest domain.Manifest) error {
@@ -75,16 +74,14 @@ func (session *memorySession) Commit(ctx context.Context) error {
 		return ErrDuplicateOrder
 	}
 	session.repository.manifests[session.pending.OrderID] = cloneManifest(*session.pending)
-	session.committed = true
 	return nil
 }
 
+// Close 收尾会话:已提交的清单已持久化,保留不动;未提交的暂存数据仅存在于会话内指针,
+// 未进入 manifests 表,无需清理。无论提交与否,都释放 active 让下一笔订单可以开始。
 func (session *memorySession) Close() {
 	session.repository.mu.Lock()
 	defer session.repository.mu.Unlock()
-	if session.committed && session.pending != nil {
-		delete(session.repository.manifests, session.pending.OrderID)
-	}
 	session.repository.active = false
 }
 
