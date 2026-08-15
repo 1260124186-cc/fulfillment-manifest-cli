@@ -44,7 +44,7 @@ func (planner *Planner) Plan(ctx context.Context, request domain.ManifestRequest
 		return domain.Manifest{}, fmt.Errorf("stage manifest: %w", err)
 	}
 	if err := session.Commit(ctx); err != nil {
-		return domain.Manifest{}, fmt.Errorf("persist manifest: %v", err)
+		return domain.Manifest{}, fmt.Errorf("persist manifest: %w", err)
 	}
 	return manifest, nil
 }

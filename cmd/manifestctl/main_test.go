@@ -40,3 +40,22 @@ func TestExitCodeForDuplicateOrder(t *testing.T) {
 		t.Fatalf("exitCodeFor() = %d, want 2", got)
 	}
 }
+
+func TestRunReportsWrappedDuplicateOrder(t *testing.T) {
+	input := bytes.NewBufferString(`{"order_id":"order-duplicate","customer":"Ada","packages":[{"sku":"book","units":1}]}`)
+	output := &bytes.Buffer{}
+	errorsOut := &bytes.Buffer{}
+	planner := stubPlanner{plan: func(context.Context, domain.ManifestRequest) (domain.Manifest, error) {
+		return domain.Manifest{}, errors.Join(errors.New("persist manifest"), store.ErrDuplicateOrder)
+	}}
+
+	if code := run(context.Background(), input, output, errorsOut, planner); code != 2 {
+		t.Fatalf("run() code = %d, want 2", code)
+	}
+	if got, want := errorsOut.String(), "order already has a manifest\n"; got != want {
+		t.Fatalf("run() stderr = %q, want %q", got, want)
+	}
+	if got := output.String(); got != "" {
+		t.Fatalf("run() stdout = %q, want empty", got)
+	}
+}
