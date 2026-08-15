@@ -28,22 +28,31 @@ func (planner *Planner) Plan(ctx context.Context, request domain.ManifestRequest
 	if err != nil {
 		return domain.Manifest{}, err
 	}
+	if err := ctx.Err(); err != nil {
+		return domain.Manifest{}, err
+	}
 	reservations, err := domain.Allocate(order, planner.stock)
 	if err != nil {
 		return domain.Manifest{}, err
 	}
+	if err := ctx.Err(); err != nil {
+		return domain.Manifest{}, err
+	}
 
-	session, err := planner.repository.Begin(context.Background())
+	session, err := planner.repository.Begin(ctx)
 	if err != nil {
 		return domain.Manifest{}, fmt.Errorf("begin manifest session: %w", err)
 	}
 	defer session.Close()
 
 	manifest := domain.NewManifest(order, reservations)
-	if err := session.Save(context.Background(), manifest); err != nil {
+	if err := session.Save(ctx, manifest); err != nil {
 		return domain.Manifest{}, fmt.Errorf("stage manifest: %w", err)
 	}
-	if err := session.Commit(context.Background()); err != nil {
+	if err := ctx.Err(); err != nil {
+		return domain.Manifest{}, err
+	}
+	if err := session.Commit(ctx); err != nil {
 		return domain.Manifest{}, fmt.Errorf("persist manifest: %w", err)
 	}
 	return manifest, nil

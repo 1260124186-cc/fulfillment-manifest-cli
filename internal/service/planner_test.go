@@ -48,4 +48,54 @@ func TestPlannerStopsWhenStorageContextExpires(t *testing.T) {
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("Plan() error = %v, want deadline exceeded", err)
 	}
+	if _, ok := repository.Get("order-4"); ok {
+		t.Fatal("Plan() stored a manifest after the context deadline")
+	}
 }
+
+func TestPlannerDoesNotCommitAfterSaveCancelsContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	repository := &cancelOnSaveRepository{cancel: cancel}
+	planner := NewPlanner(repository, domain.Stock{"book": 5})
+
+	_, err := planner.Plan(ctx, domain.ManifestRequest{
+		OrderID:  "order-5",
+		Customer: "Ada",
+		Packages: []domain.PackageRequest{{SKU: "book", Units: 1}},
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("Plan() error = %v, want context canceled", err)
+	}
+	if repository.committed {
+		t.Fatal("Plan() committed after Save canceled the context")
+	}
+}
+
+type cancelOnSaveRepository struct {
+	cancel    context.CancelFunc
+	committed bool
+}
+
+func (repository *cancelOnSaveRepository) Begin(context.Context) (store.Session, error) {
+	return cancelOnSaveSession{repository: repository}, nil
+}
+
+func (repository *cancelOnSaveRepository) Get(string) (domain.Manifest, bool) {
+	return domain.Manifest{}, false
+}
+
+type cancelOnSaveSession struct {
+	repository *cancelOnSaveRepository
+}
+
+func (session cancelOnSaveSession) Save(ctx context.Context, _ domain.Manifest) error {
+	session.repository.cancel()
+	return ctx.Err()
+}
+
+func (session cancelOnSaveSession) Commit(context.Context) error {
+	session.repository.committed = true
+	return nil
+}
+
+func (cancelOnSaveSession) Close() {}
