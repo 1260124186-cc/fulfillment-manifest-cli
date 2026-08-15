@@ -111,6 +111,6 @@ func cloneManifest(manifest domain.Manifest) domain.Manifest {
 			End:   manifest.DeliveryWindow.End,
 		}
 	}
-	clone.Reservations = append([]domain.Reservation(nil), manifest.Reservations...)
+	clone.Reservations = manifest.Reservations
 	return clone
 }
