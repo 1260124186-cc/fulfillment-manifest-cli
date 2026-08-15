@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 
@@ -29,5 +31,21 @@ func TestPlannerCreatesManifest(t *testing.T) {
 	stored, ok := repository.Get("order-1")
 	if !ok || stored.Status != "planned" {
 		t.Fatalf("Get() = %#v, %t", stored, ok)
+	}
+}
+
+func TestPlannerStopsWhenStorageContextExpires(t *testing.T) {
+	repository := store.NewMemoryRepositoryWithDelay(50 * time.Millisecond)
+	planner := NewPlanner(repository, domain.Stock{"book": 5})
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
+	defer cancel()
+
+	_, err := planner.Plan(ctx, domain.ManifestRequest{
+		OrderID:  "order-4",
+		Customer: "Ada",
+		Packages: []domain.PackageRequest{{SKU: "book", Units: 1}},
+	})
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("Plan() error = %v, want deadline exceeded", err)
 	}
 }

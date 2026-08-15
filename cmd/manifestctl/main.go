@@ -30,7 +30,7 @@ func main() {
 }
 
 func run(parent context.Context, input io.Reader, output, errorOutput io.Writer, planner manifestPlanner) int {
-	ctx, cancel := context.WithTimeout(parent, 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	var request domain.ManifestRequest

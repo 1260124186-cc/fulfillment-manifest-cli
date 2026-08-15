@@ -33,17 +33,17 @@ func (planner *Planner) Plan(ctx context.Context, request domain.ManifestRequest
 		return domain.Manifest{}, err
 	}
 
-	session, err := planner.repository.Begin(ctx)
+	session, err := planner.repository.Begin(context.Background())
 	if err != nil {
 		return domain.Manifest{}, fmt.Errorf("begin manifest session: %w", err)
 	}
 	defer session.Close()
 
 	manifest := domain.NewManifest(order, reservations)
-	if err := session.Save(ctx, manifest); err != nil {
+	if err := session.Save(context.Background(), manifest); err != nil {
 		return domain.Manifest{}, fmt.Errorf("stage manifest: %w", err)
 	}
-	if err := session.Commit(ctx); err != nil {
+	if err := session.Commit(context.Background()); err != nil {
 		return domain.Manifest{}, fmt.Errorf("persist manifest: %w", err)
 	}
 	return manifest, nil

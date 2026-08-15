@@ -40,3 +40,21 @@ func TestExitCodeForDuplicateOrder(t *testing.T) {
 		t.Fatalf("exitCodeFor() = %d, want 2", got)
 	}
 }
+
+func TestRunPropagatesCallerCancellation(t *testing.T) {
+	parent, cancel := context.WithCancel(context.Background())
+	cancel()
+	input := bytes.NewBufferString(`{"order_id":"order-4","customer":"Ada","packages":[{"sku":"book","units":1}]}`)
+	output := &bytes.Buffer{}
+	errorsOut := &bytes.Buffer{}
+	planner := stubPlanner{plan: func(ctx context.Context, _ domain.ManifestRequest) (domain.Manifest, error) {
+		if err := ctx.Err(); err != nil {
+			return domain.Manifest{}, err
+		}
+		return domain.Manifest{OrderID: "order-4", Status: "planned"}, nil
+	}}
+
+	if code := run(parent, input, output, errorsOut, planner); code != 3 {
+		t.Fatalf("run() code = %d, want cancellation code 3; stderr = %s", code, errorsOut.String())
+	}
+}
