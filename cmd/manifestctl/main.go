@@ -53,7 +53,7 @@ func run(parent context.Context, input io.Reader, output, errorOutput io.Writer,
 }
 
 func exitCodeFor(err error) int {
-	if err == store.ErrDuplicateOrder {
+	if errors.Is(err, store.ErrDuplicateOrder) {
 		return 2
 	}
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
