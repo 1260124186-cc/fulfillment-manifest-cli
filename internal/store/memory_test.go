@@ -51,3 +51,23 @@ func TestClosingCommittedSessionKeepsManifest(t *testing.T) {
 		t.Fatal("Get() did not retain committed manifest after Close()")
 	}
 }
+
+func TestClosingASessionTwiceDoesNotReleaseANewerSession(t *testing.T) {
+	repository := NewMemoryRepository()
+	first, err := repository.Begin(context.Background())
+	if err != nil {
+		t.Fatalf("first Begin() error = %v", err)
+	}
+	first.Close()
+
+	second, err := repository.Begin(context.Background())
+	if err != nil {
+		t.Fatalf("second Begin() error = %v", err)
+	}
+	defer second.Close()
+
+	first.Close()
+	if _, err := repository.Begin(context.Background()); err != ErrTransactionActive {
+		t.Fatalf("Begin() after repeated Close() error = %v, want ErrTransactionActive", err)
+	}
+}

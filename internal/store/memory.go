@@ -50,7 +50,7 @@ func (repository *MemoryRepository) Get(orderID string) (domain.Manifest, bool) 
 type memorySession struct {
 	repository *MemoryRepository
 	pending    *domain.Manifest
-	committed  bool
+	closed     bool
 }
 
 func (session *memorySession) Save(ctx context.Context, manifest domain.Manifest) error {
@@ -75,16 +75,16 @@ func (session *memorySession) Commit(ctx context.Context) error {
 		return ErrDuplicateOrder
 	}
 	session.repository.manifests[session.pending.OrderID] = cloneManifest(*session.pending)
-	session.committed = true
 	return nil
 }
 
 func (session *memorySession) Close() {
 	session.repository.mu.Lock()
 	defer session.repository.mu.Unlock()
-	if session.committed && session.pending != nil {
-		delete(session.repository.manifests, session.pending.OrderID)
+	if session.closed {
+		return
 	}
+	session.closed = true
 	session.repository.active = false
 }
 
