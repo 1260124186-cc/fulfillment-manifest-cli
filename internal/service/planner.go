@@ -37,7 +37,6 @@ func (planner *Planner) Plan(ctx context.Context, request domain.ManifestRequest
 	if err != nil {
 		return domain.Manifest{}, fmt.Errorf("begin manifest session: %w", err)
 	}
-	defer session.Close()
 
 	manifest := domain.NewManifest(order, reservations)
 	if err := session.Save(ctx, manifest); err != nil {

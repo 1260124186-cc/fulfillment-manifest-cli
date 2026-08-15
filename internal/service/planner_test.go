@@ -31,3 +31,19 @@ func TestPlannerCreatesManifest(t *testing.T) {
 		t.Fatalf("Get() = %#v, %t", stored, ok)
 	}
 }
+
+func TestPlannerReleasesSessionForTheNextOrder(t *testing.T) {
+	repository := store.NewMemoryRepository()
+	planner := NewPlanner(repository, domain.Stock{"book": 5})
+
+	for _, orderID := range []string{"order-5a", "order-5b"} {
+		_, err := planner.Plan(context.Background(), domain.ManifestRequest{
+			OrderID:  orderID,
+			Customer: "Ada",
+			Packages: []domain.PackageRequest{{SKU: "book", Units: 1}},
+		})
+		if err != nil {
+			t.Fatalf("Plan(%q) error = %v", orderID, err)
+		}
+	}
+}

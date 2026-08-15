@@ -82,6 +82,9 @@ func (session *memorySession) Commit(ctx context.Context) error {
 func (session *memorySession) Close() {
 	session.repository.mu.Lock()
 	defer session.repository.mu.Unlock()
+	if session.committed && session.pending != nil {
+		delete(session.repository.manifests, session.pending.OrderID)
+	}
 	session.repository.active = false
 }
 
