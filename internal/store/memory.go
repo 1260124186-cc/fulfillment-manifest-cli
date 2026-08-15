@@ -111,6 +111,7 @@ func cloneManifest(manifest domain.Manifest) domain.Manifest {
 			End:   manifest.DeliveryWindow.End,
 		}
 	}
-	clone.Reservations = manifest.Reservations
+	// 深拷贝 Reservations，避免调用方修改读出结果时污染已保存的清单
+	clone.Reservations = append([]domain.Reservation(nil), manifest.Reservations...)
 	return clone
 }
