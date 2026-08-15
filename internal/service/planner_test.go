@@ -31,3 +31,20 @@ func TestPlannerCreatesManifest(t *testing.T) {
 		t.Fatalf("Get() = %#v, %t", stored, ok)
 	}
 }
+
+func TestPlannerUsesDefaultWindowForFlexibleDelivery(t *testing.T) {
+	repository := store.NewMemoryRepository()
+	planner := NewPlanner(repository, domain.Stock{"book": 5})
+
+	manifest, err := planner.Plan(context.Background(), domain.ManifestRequest{
+		OrderID:  "order-3",
+		Customer: "Ada",
+		Packages: []domain.PackageRequest{{SKU: "book", Units: 1}},
+	})
+	if err != nil {
+		t.Fatalf("Plan() error = %v", err)
+	}
+	if manifest.DeliveryWindow == nil || manifest.DeliveryWindow.Start != "09:00" {
+		t.Fatalf("Plan() delivery window = %#v", manifest.DeliveryWindow)
+	}
+}

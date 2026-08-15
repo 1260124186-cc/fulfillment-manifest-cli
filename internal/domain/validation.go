@@ -34,7 +34,7 @@ func NormalizeRequest(request ManifestRequest) (Order, error) {
 
 	window := request.DeliveryWindow
 	if window == nil {
-		window = &DeliveryWindow{Start: defaultWindowStart, End: defaultWindowEnd}
+		window = nil
 	} else {
 		window = &DeliveryWindow{
 			Start: strings.TrimSpace(window.Start),
