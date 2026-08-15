@@ -1,0 +1,11 @@
+.git
+.codex
+tasks
+*.patch
+*.out
+*.log
+bin
+coverage
+tmp
+BUG_REPRO.md
+registry
