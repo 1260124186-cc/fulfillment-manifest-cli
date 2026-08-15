@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -29,5 +30,23 @@ func TestPlannerCreatesManifest(t *testing.T) {
 	stored, ok := repository.Get("order-1")
 	if !ok || stored.Status != "planned" {
 		t.Fatalf("Get() = %#v, %t", stored, ok)
+	}
+}
+
+func TestPlannerPreservesDuplicateOrderError(t *testing.T) {
+	repository := store.NewMemoryRepository()
+	planner := NewPlanner(repository, domain.Stock{"book": 5})
+	request := domain.ManifestRequest{
+		OrderID:  "order-duplicate",
+		Customer: "Ada",
+		Packages: []domain.PackageRequest{{SKU: "book", Units: 1}},
+	}
+	if _, err := planner.Plan(context.Background(), request); err != nil {
+		t.Fatalf("first Plan() error = %v", err)
+	}
+
+	_, err := planner.Plan(context.Background(), request)
+	if !errors.Is(err, store.ErrDuplicateOrder) {
+		t.Fatalf("second Plan() error = %v, want duplicate-order classification", err)
 	}
 }
